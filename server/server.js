@@ -46,10 +46,10 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://*.firebaseio.com", "https://apis.google.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      imgSrc: ["'self'", 'data:', '*'], // Allow images from any source (required for Pinterest-like functionality)
-      connectSrc: ["'self'", process.env.CLIENT_ORIGIN || 'http://localhost:5173', "https://*.firebase.com", "https://*.firebaseio.com"],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "*"], // Allow images from any source (required for Pinterest-like functionality)
+      connectSrc: ["'self'", process.env.CLIENT_ORIGIN || "http://localhost:5173", "https://*.firebase.com", "https://*.firebaseio.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
     }

@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure body defaults to using gray classes */
+body {
+  @apply bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+}
+
+/* Ensure smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove default button outline and apply focus ring via Tailwind */
+button:focus {
+  outline: none;
+}
+button:focus-visible {
+  @apply ring-2 ring-offset-2 ring-red-500 dark:ring-offset-gray-900;
+}

@@ -40,21 +40,10 @@ app.use(express.urlencoded({ extended: false }));
 // Add compression for better performance
 app.use(compression());
 
-// Security headers with Helmet - disable crossOriginResourcePolicy
+// Security headers with Helmet
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "*"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: []
-    }
-  },
-  crossOriginResourcePolicy: false, // Disable completely
+  contentSecurityPolicy: false, // Disable CSP to avoid path-to-regexp issues
+  crossOriginResourcePolicy: false,
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
 }));
@@ -106,14 +95,19 @@ app.use('/uploads', (req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/images', require('./routes/images'));
 
-// API health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date() });
+// Railway health check endpoint (must be defined before the catch-all route)
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Pinterest Clone API is running',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Railway-specific health check endpoint
-app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running', timestamp: new Date() });
+// API health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Production setup for serving client static assets

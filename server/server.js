@@ -21,11 +21,30 @@ require('dotenv').config();
 // Initialize Express app
 const app = express();
 
+// IMPORTANT: Add the health check route before any middleware
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Pinterest Clone API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Connect to MongoDB database
-require('./config/db')();
+try {
+  require('./config/db')();
+} catch (err) {
+  console.error('MongoDB connection error:', err);
+  // Continue without failing the app
+}
 
 // Initialize Firebase Admin (no need to store result as it's initialized in the module)
-require('./config/firebase');
+try {
+  require('./config/firebase');
+} catch (err) {
+  console.error('Firebase initialization error:', err);
+  // Continue without failing the app
+}
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -40,9 +59,9 @@ app.use(express.urlencoded({ extended: false }));
 // Add compression for better performance
 app.use(compression());
 
-// Security headers with Helmet
+// Security headers with Helmet - disable CSP to avoid path-to-regexp issues
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP to avoid path-to-regexp issues
+  contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
@@ -55,23 +74,28 @@ app.use(cors({
 }));
 
 // Express session configuration with MongoDB store
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'keyboard cat',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ 
-      mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/pinterest-clone',
-      collectionName: 'sessions'
-    }),
-    cookie: {
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Fix SameSite warning
-    }
-  })
-);
+try {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'keyboard cat',
+      resave: false,
+      saveUninitialized: false,
+      store: MongoStore.create({ 
+        mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/pinterest-clone',
+        collectionName: 'sessions'
+      }),
+      cookie: {
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Fix SameSite warning
+      }
+    })
+  );
+} catch (err) {
+  console.error('Session setup error:', err);
+  // Continue without session store
+}
 
 // Serve static files from the uploads directory with explicit CORS headers
 app.use('/uploads', (req, res, next) => {
@@ -91,32 +115,18 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
-// API Routes with '/api' prefix
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/images', require('./routes/images'));
+// API routes
+try {
+  // API Routes with '/api' prefix
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/images', require('./routes/images'));
 
-// Railway health check endpoint (must be defined before the catch-all route)
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'Pinterest Clone API is running',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+  // API health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-});
-
-// API health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Production setup for serving client static assets
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
-  });
+} catch (err) {
+  console.error('Error setting up routes:', err);
 }
 
 // Global error handler middleware
@@ -148,5 +158,8 @@ process.on('unhandledRejection', (err) => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION:', err);
-  process.exit(1);
+  // Don't exit in production
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });

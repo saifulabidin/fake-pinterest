@@ -45,11 +45,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://*.firebaseio.com", "https://apis.google.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "*"], // Allow images from any source (required for Pinterest-like functionality)
-      connectSrc: ["'self'", process.env.CLIENT_ORIGIN || "http://localhost:5173", "https://*.firebase.com", "https://*.firebaseio.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "*"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
     }
@@ -109,6 +109,11 @@ app.use('/api/images', require('./routes/images'));
 // API health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date() });
+});
+
+// Railway-specific health check endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running', timestamp: new Date() });
 });
 
 // Production setup for serving client static assets

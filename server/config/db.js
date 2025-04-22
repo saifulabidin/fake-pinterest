@@ -15,9 +15,16 @@ const connectDB = async () => {
   try {
     const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/pinterest-clone';
     
+    if (!MONGO_URI) {
+      console.error('MongoDB URI is not defined in environment variables');
+      process.exit(1);
+    }
+    
+    console.log('Attempting to connect to MongoDB...');
+    
     // Connection options to improve performance and reliability
     const options = {
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      serverSelectionTimeoutMS: 10000, // Increased timeout for cloud deployments
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
       family: 4, // Use IPv4, skip trying IPv6
       maxPoolSize: 10 // Maintain up to 10 socket connections
@@ -49,7 +56,10 @@ const connectDB = async () => {
 
   } catch (err) {
     console.error(`Error connecting to MongoDB: ${err.message}`);
-    process.exit(1);
+    // Don't exit the process in production to allow for reconnection attempts
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   }
 };
 

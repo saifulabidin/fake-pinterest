@@ -192,10 +192,6 @@ npm run build
 ```
 2. Deploy the `dist` directory to any static hosting service (Vercel, Netlify, etc.)
 
-## Screenshots
-
-[Add screenshots of your application here]
-
 ## Future Improvements
 
 - Implement image search optimization
@@ -203,6 +199,57 @@ npm run build
 - Create collections/boards functionality
 - Add image editing capabilities
 - Implement infinite scrolling
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and continuous deployment, automatically building, testing, and deploying both client and server components to Railway.app.
+
+### Workflow Configuration
+
+Three separate workflows handle the CI/CD process:
+
+1. **Client CI/CD** (`.github/workflows/client-ci-cd.yml`)
+   - Triggers on changes to the client code
+   - Builds and tests the React application
+   - Deploys to Railway.app when merged to main branch
+
+2. **Server CI/CD** (`.github/workflows/server-ci-cd.yml`)
+   - Triggers on changes to the server code
+   - Builds and validates the Node.js application
+   - Deploys to Railway.app when merged to main branch
+
+3. **Full Project CI/CD** (`.github/workflows/full-ci-cd.yml`)
+   - Handles project-wide changes that affect both components
+   - Can be manually triggered to deploy either or both components
+   - Used for coordinated deployments
+
+### Setup Requirements
+
+To enable the CI/CD pipeline:
+
+1. **Add Railway API Token to GitHub Secrets**
+   - Generate a Railway API token from the Railway dashboard
+   - Add it as a secret named `RAILWAY_TOKEN` in your GitHub repository settings
+
+2. **Ensure Railway Services are Configured**
+   - Make sure you have services named "client" and "server" set up in Railway
+   - The railway.toml files in both directories should match your Railway configuration
+
+### Manual Deployment
+
+You can manually trigger a full deployment using the "workflow_dispatch" event in GitHub Actions:
+
+1. Go to the Actions tab in your GitHub repository
+2. Select the "Full Project CI/CD" workflow
+3. Click "Run workflow"
+4. Choose which components to deploy (client, server, or both)
+5. Start the workflow
+
+### Monitoring Deployments
+
+- Check the GitHub Actions tab for build and deployment status
+- Railway.app dashboard provides deployment logs and environment information
+- Set up notifications in GitHub to get alerts for failed deployments
 
 ## Contributing
 

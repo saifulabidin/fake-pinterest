@@ -1,0 +1,111 @@
+name: Full Project CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'client/**'
+      - 'server/**'
+      - '.github/workflows/client-ci-cd.yml'
+      - '.github/workflows/server-ci-cd.yml'
+  workflow_dispatch:
+    inputs:
+      deploy_client:
+        description: 'Deploy client app'
+        type: boolean
+        default: true
+      deploy_server:
+        description: 'Deploy server app'
+        type: boolean
+        default: true
+
+jobs:
+  build-client:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.deploy_client != 'false'
+    
+    defaults:
+      run:
+        working-directory: ./client
+        
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint
+        run: npm run lint
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist
+          retention-days: 1
+
+  build-server:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.deploy_server != 'false'
+    
+    defaults:
+      run:
+        working-directory: ./server
+        
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run build script
+        run: npm run build
+
+  deploy:
+    needs: [build-client, build-server]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Download client build artifacts
+        if: github.event.inputs.deploy_client != 'false'
+        uses: actions/download-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist
+      
+      - name: Deploy client to Railway
+        if: github.event.inputs.deploy_client != 'false'
+        working-directory: ./client
+        run: railway up --service client
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      
+      - name: Deploy server to Railway
+        if: github.event.inputs.deploy_server != 'false'
+        working-directory: ./server
+        run: railway up --service server
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

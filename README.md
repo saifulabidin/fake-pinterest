@@ -202,7 +202,9 @@ npm run build
 
 ## CI/CD Pipeline
 
-This project uses GitHub Actions for continuous integration and continuous deployment, automatically building, testing, and deploying both client and server components to Railway.app.
+This project uses GitHub Actions for continuous integration and continuous deployment, automatically building, testing, and deploying both client and server components to their respective platforms:
+- Backend (server) is deployed to Railway.app
+- Frontend (client) is deployed to Vercel
 
 ### Workflow Configuration
 
@@ -211,7 +213,7 @@ Three separate workflows handle the CI/CD process:
 1. **Client CI/CD** (`.github/workflows/client-ci-cd.yml`)
    - Triggers on changes to the client code
    - Builds and tests the React application
-   - Deploys to Railway.app when merged to main branch
+   - Deploys to Vercel when merged to main branch
 
 2. **Server CI/CD** (`.github/workflows/server-ci-cd.yml`)
    - Triggers on changes to the server code
@@ -231,9 +233,19 @@ To enable the CI/CD pipeline:
    - Generate a Railway API token from the Railway dashboard
    - Add it as a secret named `RAILWAY_TOKEN` in your GitHub repository settings
 
-2. **Ensure Railway Services are Configured**
-   - Make sure you have services named "client" and "server" set up in Railway
-   - The railway.toml files in both directories should match your Railway configuration
+2. **Add Vercel Deployment Secrets to GitHub**
+   - Add the following secrets to your GitHub repository settings:
+     - `VERCEL_TOKEN`: Your Vercel personal access token
+     - `VERCEL_ORG_ID`: Your Vercel organization ID
+     - `VERCEL_PROJECT_ID`: The ID of your project in Vercel
+
+3. **Ensure Railway Services are Configured**
+   - Make sure you have a service named "server" set up in Railway
+   - The railway.toml file in the server directory should match your Railway configuration
+
+4. **Set up Vercel Project**
+   - Create and configure a project in Vercel for the client application
+   - Link it to your GitHub repository
 
 ### Manual Deployment
 
@@ -248,7 +260,8 @@ You can manually trigger a full deployment using the "workflow_dispatch" event i
 ### Monitoring Deployments
 
 - Check the GitHub Actions tab for build and deployment status
-- Railway.app dashboard provides deployment logs and environment information
+- Railway.app dashboard provides deployment logs for the backend
+- Vercel dashboard provides deployment logs for the frontend
 - Set up notifications in GitHub to get alerts for failed deployments
 
 ## Contributing
